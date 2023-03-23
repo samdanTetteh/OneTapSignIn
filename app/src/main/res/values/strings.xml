@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">OneTapSignIn</string>
+
+    <string name="client_id">1020281598242-gl67730kouu49gpsotiqgjgj37jnliot.apps.googleusercontent.com</string>
 </resources>
