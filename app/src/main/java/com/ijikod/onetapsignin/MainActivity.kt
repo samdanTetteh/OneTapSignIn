@@ -5,6 +5,8 @@ import android.content.IntentSender
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.TextView
+import android.widget.Toast
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -38,7 +40,7 @@ class MainActivity : AppCompatActivity() {
                 // Your server's client ID, not your Android client ID.
                 .setServerClientId(getString(R.string.client_id))
                 // Only show accounts previously used to sign in.
-                .setFilterByAuthorizedAccounts(true)
+                .setFilterByAuthorizedAccounts(false)
                 .build())
             // Automatically sign in when exactly one credential is retrieved.
             .setAutoSelectEnabled(true)
@@ -55,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                         0, 0, null
                     )
                 }catch (e: IntentSender.SendIntentException){
-                    Log.e("ONE TAP", "Couldn't start One Tap UI: ${e.localizedMessage}"))
+                    Log.e("ONE TAP", "Couldn't start One Tap UI: ${e.localizedMessage}")
                 }
 
             }
@@ -85,6 +87,8 @@ class MainActivity : AppCompatActivity() {
                             // Got an ID token from Google. Use it to authenticate
                             // with your backend.
                             Log.d("ONE TAP", "Got ID token.")
+                            val successString = String.format(getString(R.string.logged_in_successfully), username)
+                            findViewById<TextView>(R.id.status_txt).text = successString
                         }
                         password != null -> {
                             // Got a saved username and password. Use them to authenticate

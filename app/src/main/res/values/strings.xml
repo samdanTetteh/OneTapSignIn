@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">OneTapSignIn</string>
 
-    <string name="client_id">1020281598242-gl67730kouu49gpsotiqgjgj37jnliot.apps.googleusercontent.com</string>
+    <string name="client_id">1020281598242-89mf49gr9s8v5319804i9l3hlir6hic5.apps.googleusercontent.com</string>
+
+    <string name="login">Please Login</string>
+    <string name="logged_in_successfully">%1$s logged in successfully</string>
 </resources>
