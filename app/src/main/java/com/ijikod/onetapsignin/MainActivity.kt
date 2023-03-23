@@ -9,6 +9,7 @@ import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
 
 class MainActivity : AppCompatActivity() {
 
@@ -95,7 +96,23 @@ class MainActivity : AppCompatActivity() {
                             Log.d("ONE TAP", "No ID token or password!")
                         }
                     }
-                } catch (_ : ApiException) {
+                } catch (e : ApiException) {
+                    when(e.statusCode) {
+                        CommonStatusCodes.CANCELED -> {
+                            Log.d("ONE TAP", "One-tap dialog was closed.")
+                            // Don't re-prompt the user.
+                            showOneTapUI = false
+                        }
+
+                        CommonStatusCodes.NETWORK_ERROR -> {
+                            Log.d("ONE TAP", "One-tap encountered a network error.")
+                            // Try again or just ignore.
+                        }
+
+                        else -> {
+                            Log.d("ONE_TAP", "Couldn't get credential from result." +
+                                    " (${e.localizedMessage})")
+                        }                    }
 
                 }
             }
