@@ -86,6 +86,8 @@ class MainActivity : AppCompatActivity() {
                         idToken != null -> {
                             // Got an ID token from Google. Use it to authenticate
                             // with your backend.
+                            //FIXME: Save credentials to avoid display of prompt
+                            //FIXME: Implement logout
                             Log.d("ONE TAP", "Got ID token.")
                             val successString = String.format(getString(R.string.logged_in_successfully), username)
                             findViewById<TextView>(R.id.status_txt).text = successString
