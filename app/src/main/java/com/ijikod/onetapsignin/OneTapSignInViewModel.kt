@@ -13,10 +13,11 @@ class OneTapSignInViewModel(private val savedStateHandle: SavedStateHandle): Vie
     val isUserLoggedIn: StateFlow<Boolean> = _isUserLoggedInState.asStateFlow()
 
 
-
     fun saveLoginStatus(isLoggedIn: Boolean) {
         savedStateHandle["isLoggedIn"] = isLoggedIn
         _isUserLoggedInState.update { savedStateHandle["isLoggedIn"]!! }
     }
 
 }
+
+

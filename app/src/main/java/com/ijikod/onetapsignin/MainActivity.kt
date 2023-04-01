@@ -6,12 +6,18 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
+import kotlinx.coroutines.launch
+import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,8 +33,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setUpOnTapSignInClient()
-        displayOneTapSignInUI()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isUserLoggedIn.collect { isLoggedIn ->
+                    if (!isLoggedIn) {
+                        setUpOnTapSignInClient()
+                        displayOneTapSignInUI()
+                    } else {
+                        Toast.makeText(this@MainActivity,
+                            "Already logged in", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+
+
     }
 
 
@@ -73,6 +92,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -89,6 +109,7 @@ class MainActivity : AppCompatActivity() {
                             // with your backend.
                             //FIXME: Save credentials to avoid display of prompt
                             //FIXME: Implement logout
+                            viewModel.saveLoginStatus(showOneTapUI)
                             Log.d("ONE TAP", "Got ID token.")
                             val successString = String.format(getString(R.string.logged_in_successfully), username)
                             findViewById<TextView>(R.id.status_txt).text = successString
