@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.viewModels
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -21,13 +21,14 @@ class MainActivity : AppCompatActivity() {
     private val REQ_ONE_TAP = 2  // Can be any integer unique to the Activity
     private var showOneTapUI = true
 
+    private val viewModel: OneTapSignInViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         setUpOnTapSignInClient()
         displayOneTapSignInUI()
-
     }
 
 
