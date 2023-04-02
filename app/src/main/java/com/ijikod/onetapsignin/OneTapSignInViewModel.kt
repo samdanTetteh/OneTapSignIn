@@ -21,7 +21,8 @@ class OneTapSignInViewModel(private val savedStateHandle: SavedStateHandle): Vie
         _loggedUserState.update {
             it.copy(
                 userId = savedStateHandle[USER_ID_KEY],
-                userToken = savedStateHandle[USER_TOKEN_KEY]
+                userToken = savedStateHandle[USER_TOKEN_KEY],
+                userSignedOut = false
             )
         }
     }
@@ -29,4 +30,6 @@ class OneTapSignInViewModel(private val savedStateHandle: SavedStateHandle): Vie
 }
 
 
-data class UserUIState(val userToken: String? = null, val userId: String? = null)
+data class UserUIState(val userToken: String? = null,
+                       val userId: String? = null,
+                       val userSignedOut: Boolean = true)

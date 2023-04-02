@@ -5,6 +5,8 @@ import android.content.IntentSender
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
@@ -22,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var oneTapClient: SignInClient
     private lateinit var signInClient: BeginSignInRequest
 
+    private lateinit var signOutButton: Button
+
     private val REQ_ONE_TAP = 2  // Can be any integer unique to the Activity
     private var showOneTapUI = true
 
@@ -34,15 +38,19 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.loggedUserState.collect { loggedInUser ->
-                    loggedInUser.userId.let {
-                        setUpOnTapSignInClient()
-                        displayOneTapSignInUI()
+                    when (loggedInUser.userSignedOut) {
+                        true -> {
+                            setUpOnTapSignInClient()
+                            displayOneTapSignInUI()
+                        }
+
+                        false -> {
+                            showLoginScreen()
+                        }
                     }
                 }
             }
         }
-
-
     }
 
 
@@ -145,5 +153,22 @@ class MainActivity : AppCompatActivity() {
         Log.d("ONE TAP", "Got ID token.")
         val successString = String.format(getString(R.string.logged_in_successfully), user.userId)
         findViewById<TextView>(R.id.status_txt).text = successString
+        setUpSignOutBtn()
+    }
+
+    private fun showLoginScreen() {
+        signOutButton = findViewById(R.id.sign_out_btn)
+        findViewById<TextView>(R.id.status_txt).text = getString(R.string.login)
+        signOutButton.visibility = View.GONE
+        UserUIState(userSignedOut = false)
+    }
+
+
+    private fun setUpSignOutBtn() {
+        signOutButton.visibility = View.VISIBLE
+        signOutButton.setOnClickListener {
+            viewModel.saveUserDetails(UserUIState(userSignedOut = true))
+            oneTapClient.signOut()
+        }
     }
 }
