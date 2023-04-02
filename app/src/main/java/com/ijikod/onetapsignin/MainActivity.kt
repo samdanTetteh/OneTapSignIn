@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -17,7 +16,6 @@ import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import kotlinx.coroutines.launch
-import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,13 +33,10 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isUserLoggedIn.collect { isLoggedIn ->
-                    if (!isLoggedIn) {
+                viewModel.loggedUserState.collect { loggedInUser ->
+                    loggedInUser.userId.let {
                         setUpOnTapSignInClient()
                         displayOneTapSignInUI()
-                    } else {
-                        Toast.makeText(this@MainActivity,
-                            "Already logged in", Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -109,10 +104,9 @@ class MainActivity : AppCompatActivity() {
                             // with your backend.
                             //FIXME: Save credentials to avoid display of prompt
                             //FIXME: Implement logout
-                            viewModel.saveLoginStatus(showOneTapUI)
-                            Log.d("ONE TAP", "Got ID token.")
-                            val successString = String.format(getString(R.string.logged_in_successfully), username)
-                            findViewById<TextView>(R.id.status_txt).text = successString
+                            val user = UserUIState(userId = username, userToken = idToken)
+                            viewModel.saveUserDetails(user)
+                            showSuccessfulLogin(user)
                         }
                         password != null -> {
                             // Got a saved username and password. Use them to authenticate
@@ -140,10 +134,16 @@ class MainActivity : AppCompatActivity() {
                         else -> {
                             Log.d("ONE_TAP", "Couldn't get credential from result." +
                                     " (${e.localizedMessage})")
-                        }                    }
-
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private fun showSuccessfulLogin(user: UserUIState) {
+        Log.d("ONE TAP", "Got ID token.")
+        val successString = String.format(getString(R.string.logged_in_successfully), user.userId)
+        findViewById<TextView>(R.id.status_txt).text = successString
     }
 }
