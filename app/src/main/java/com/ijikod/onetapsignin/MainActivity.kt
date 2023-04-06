@@ -25,9 +25,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var signInClient: BeginSignInRequest
 
     private lateinit var signOutButton: Button
+    private lateinit var signInButton: Button
 
     private val REQ_ONE_TAP = 2  // Can be any integer unique to the Activity
-    private var showOneTapUI = true
 
     private val viewModel: OneTapSignInViewModel by viewModels()
 
@@ -35,19 +35,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.loggedUserState.collect { loggedInUser ->
-                    when (loggedInUser.userSignedOut) {
-                        true -> {
-                            setUpOnTapSignInClient()
-                            displayOneTapSignInUI()
-                        }
+        signOutButton = findViewById(R.id.sign_out_btn)
+        signInButton = findViewById(R.id.sign_in_btn)
 
-                        false -> {
-                            showLoginScreen()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
+                viewModel.loggedUserState.collect { loggedInUser ->
+                    loggedInUser.isUserLoggedIn?.let { isUserLoggedIn ->
+                        when (isUserLoggedIn) {
+                            false -> { showLoginScreen() }
+
+                            else -> { showLoggedInScreen() }
                         }
-                    }
+                    } ?: run { showLoginScreen() }
                 }
             }
         }
@@ -94,6 +95,11 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    private fun setUpSignIn(){
+        setUpOnTapSignInClient()
+        displayOneTapSignInUI()
+    }
+
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -112,9 +118,8 @@ class MainActivity : AppCompatActivity() {
                             // with your backend.
                             //FIXME: Save credentials to avoid display of prompt
                             //FIXME: Implement logout
-                            val user = UserUIState(userId = username, userToken = idToken)
-                            viewModel.saveUserDetails(user)
-                            showSuccessfulLogin(user)
+                            viewModel.saveUserDetails(credential.id, credential.googleIdToken, true)
+                            showLoggedInScreen()
                         }
                         password != null -> {
                             // Got a saved username and password. Use them to authenticate
@@ -131,7 +136,6 @@ class MainActivity : AppCompatActivity() {
                         CommonStatusCodes.CANCELED -> {
                             Log.d("ONE TAP", "One-tap dialog was closed.")
                             // Don't re-prompt the user.
-                            showOneTapUI = false
                         }
 
                         CommonStatusCodes.NETWORK_ERROR -> {
@@ -149,25 +153,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSuccessfulLogin(user: UserUIState) {
-        Log.d("ONE TAP", "Got ID token.")
-        val successString = String.format(getString(R.string.logged_in_successfully), user.userId)
-        findViewById<TextView>(R.id.status_txt).text = successString
-        setUpSignOutBtn()
+    private fun showLoggedInScreen() {
+        lifecycleScope.launch {
+            viewModel.loggedUserState.collect{ state ->
+                Log.d("ONE TAP", "Got ID token.")
+                val successString = String.format(getString(R.string.logged_in_successfully), state.userId)
+                findViewById<TextView>(R.id.status_txt).text = successString
+                setUpSignOutBtn()
+            }
+        }
     }
 
     private fun showLoginScreen() {
-        signOutButton = findViewById(R.id.sign_out_btn)
         findViewById<TextView>(R.id.status_txt).text = getString(R.string.login)
+        signInButton.setOnClickListener {
+            setUpSignIn()
+        }
+        signInButton.visibility = View.VISIBLE
         signOutButton.visibility = View.GONE
-        UserUIState(userSignedOut = false)
     }
 
 
     private fun setUpSignOutBtn() {
+        signInButton.visibility = View.GONE
         signOutButton.visibility = View.VISIBLE
         signOutButton.setOnClickListener {
-            viewModel.saveUserDetails(UserUIState(userSignedOut = true))
+            viewModel.saveUserDetails(isUserLoggedIn = false)
             oneTapClient.signOut()
         }
     }

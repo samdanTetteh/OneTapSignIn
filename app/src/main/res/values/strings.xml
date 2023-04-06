@@ -6,4 +6,5 @@
     <string name="login">Please Login</string>
     <string name="logged_in_successfully">%1$s logged in successfully</string>
     <string name="sign_out">SIGN OUT</string>
+    <string name="sign_in">SIGN IN</string>
 </resources>
