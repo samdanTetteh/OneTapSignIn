@@ -38,6 +38,8 @@ class MainActivity : AppCompatActivity() {
         signOutButton = findViewById(R.id.sign_out_btn)
         signInButton = findViewById(R.id.sign_in_btn)
 
+        oneTapClient = Identity.getSignInClient(this)
+
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.CREATED) {
@@ -56,7 +58,6 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun setUpOnTapSignInClient() {
-        oneTapClient = Identity.getSignInClient(this)
         signInClient = BeginSignInRequest.builder()
             .setPasswordRequestOptions(BeginSignInRequest.PasswordRequestOptions.builder().setSupported(true).build())
             .setGoogleIdTokenRequestOptions(BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
@@ -179,6 +180,7 @@ class MainActivity : AppCompatActivity() {
         signOutButton.visibility = View.VISIBLE
         signOutButton.setOnClickListener {
             viewModel.saveUserDetails(isUserLoggedIn = false)
+            showLoginScreen()
             oneTapClient.signOut()
         }
     }

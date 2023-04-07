@@ -33,7 +33,6 @@ class OneTapSignInViewModel(private val savedStateHandle: SavedStateHandle) : Vi
             )
         }
     }
-
 }
 
 
