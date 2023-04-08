@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -45,10 +46,14 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.CREATED) {
                 viewModel.loggedUserState.collect { loggedInUser ->
                     loggedInUser.isUserLoggedIn?.let { isUserLoggedIn ->
-                        when (isUserLoggedIn) {
-                            false -> { showLoginScreen() }
+                        when {
+                            !isUserLoggedIn -> {
+                                showLoginScreen()
+                            }
 
-                            else -> { showLoggedInScreen() }
+                            else -> {
+                                showLoggedInScreen()
+                            }
                         }
                     } ?: run { showLoginScreen() }
                 }
@@ -56,24 +61,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        oneTapClient.signOut()
+    }
 
     private fun setUpOnTapSignInClient() {
         signInClient = BeginSignInRequest.builder()
-            .setPasswordRequestOptions(BeginSignInRequest.PasswordRequestOptions.builder().setSupported(true).build())
-            .setGoogleIdTokenRequestOptions(BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                .setSupported(true)
-                // Your server's client ID, not your Android client ID.
-                .setServerClientId(getString(R.string.client_id))
-                // Only show accounts previously used to sign in.
-                .setFilterByAuthorizedAccounts(false)
-                .build())
+            .setPasswordRequestOptions(
+                BeginSignInRequest.PasswordRequestOptions.builder().setSupported(true).build()
+            )
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    // Your server's client ID, not your Android client ID.
+                    .setServerClientId(getString(R.string.client_id))
+                    // Only show accounts previously used to sign in.
+                    .setFilterByAuthorizedAccounts(false)
+                    .build()
+            )
             // Automatically sign in when exactly one credential is retrieved.
             .setAutoSelectEnabled(true)
             .build()
     }
 
 
-    private fun displayOneTapSignInUI(){
+    private fun displayOneTapSignInUI() {
         oneTapClient.beginSignIn(signInClient)
             .addOnSuccessListener {
                 try {
@@ -81,8 +94,9 @@ class MainActivity : AppCompatActivity() {
                         it.pendingIntent.intentSender, REQ_ONE_TAP, null, 0,
                         0, 0, null
                     )
-                }catch (e: IntentSender.SendIntentException){
+                } catch (e: IntentSender.SendIntentException) {
                     Log.e("ONE TAP", "Couldn't start One Tap UI: ${e.localizedMessage}")
+                    showToastMsg("Couldn't start One Tap UI: ${e.localizedMessage}")
                 }
 
             }
@@ -91,12 +105,12 @@ class MainActivity : AppCompatActivity() {
                 // No saved credentials found. Launch the One Tap sign-up flow, or
                 // do nothing and continue presenting the signed-out UI.
                 it.localizedMessage?.let { errorMsg ->
-                    Log.d("ONE TAP", errorMsg)
+                    showToastMsg(errorMsg)
                 }
             }
     }
 
-    private fun setUpSignIn(){
+    private fun setUpSignIn() {
         setUpOnTapSignInClient()
         displayOneTapSignInUI()
     }
@@ -117,8 +131,6 @@ class MainActivity : AppCompatActivity() {
                         idToken != null -> {
                             // Got an ID token from Google. Use it to authenticate
                             // with your backend.
-                            //FIXME: Save credentials to avoid display of prompt
-                            //FIXME: Implement logout
                             viewModel.saveUserDetails(credential.id, credential.googleIdToken, true)
                             showLoggedInScreen()
                         }
@@ -129,23 +141,23 @@ class MainActivity : AppCompatActivity() {
                         }
                         else -> {
                             // Shouldn't happen.
-                            Log.d("ONE TAP", "No ID token or password!")
+                            showToastMsg("No ID token or password!")
                         }
                     }
-                } catch (e : ApiException) {
-                    when(e.statusCode) {
+                } catch (e: ApiException) {
+                    when (e.statusCode) {
                         CommonStatusCodes.CANCELED -> {
                             Log.d("ONE TAP", "One-tap dialog was closed.")
                             // Don't re-prompt the user.
                         }
 
                         CommonStatusCodes.NETWORK_ERROR -> {
-                            Log.d("ONE TAP", "One-tap encountered a network error.")
                             // Try again or just ignore.
+                            showToastMsg("One-tap encountered a network error.")
                         }
 
                         else -> {
-                            Log.d("ONE_TAP", "Couldn't get credential from result." +
+                            showToastMsg("Couldn't get credential from result." +
                                     " (${e.localizedMessage})")
                         }
                     }
@@ -156,13 +168,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun showLoggedInScreen() {
         lifecycleScope.launch {
-            viewModel.loggedUserState.collect{ state ->
+            viewModel.loggedUserState.collect { state ->
                 Log.d("ONE TAP", "Got ID token.")
-                val successString = String.format(getString(R.string.logged_in_successfully), state.userId)
+                val successString =
+                    String.format(getString(R.string.logged_in_successfully), state.userId)
                 findViewById<TextView>(R.id.status_txt).text = successString
                 setUpSignOutBtn()
             }
         }
+    }
+
+    private fun showToastMsg(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 
     private fun showLoginScreen() {
