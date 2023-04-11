@@ -1,1 +1,1 @@
-echo "Hello, I am Jenkinsfile branch"
+echo "Hello, I am Jenkinsfile"
